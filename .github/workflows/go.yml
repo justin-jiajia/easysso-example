@@ -1,0 +1,78 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Test, Build and Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags: "v*.*"
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+  
+    - name: Set up Go
+      uses: actions/setup-go@v3
+
+    - name: Get-go
+      run: go get .
+
+    - name: Build linux
+      run: |
+        go build -ldflags '-linkmode "external" -extldflags "-static"'
+        mv easysso_example easysso_example_linux
+       
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v3.1.3
+      with: 
+       name: easysso_example_linux
+       path: easysso_example_linux
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v3
+  
+    - name: Set up Go
+      uses: actions/setup-go@v3
+
+    - name: Get-go
+      run: go get .
+      
+    - name: Build win
+      run: |
+        go build
+        Rename-Item -Path "./easysso_example.exe" -NewName "easysso_example.exe"
+
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v3.1.3
+      with: 
+       name: easysso_example.exe
+       path: easysso_example.exe
+
+  release:
+    needs: [build-windows, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Download Win
+      uses: actions/download-artifact@v3
+      with:
+        name: easysso_example_win.exe
+
+    - name: Download Linux
+      uses: actions/download-artifact@v3
+      with:
+        name: easysso_example_linux
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        draft: true
+        files: |
+          easysso_example_win.exe
+          easysso_example_linux

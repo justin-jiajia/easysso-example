@@ -1,0 +1,22 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>已登录 - EasySSO测试</title>
+</head>
+
+<body>
+  您已登录~<br />
+  你的用户名：{{ .UserName }}<br />
+  您的ID：{{ .ID }}<br />
+  您的注册时间：<span id="time"></span><br />
+  <a href="/logout">注销</a>
+  <a href="{{.SettingsURL}}">设置</a>
+  <script>
+    var time = document.getElementById("time");
+    time.innerHTML = new Date({{ .JoinTime }}* 1000).toLocaleString();
+  </script>
+</body>
+
+</html>
