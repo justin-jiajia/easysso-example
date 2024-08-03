@@ -22,7 +22,7 @@ jobs:
 
     - name: Build linux
       run: |
-        go build -ldflags '-linkmode "external" -extldflags "-static"'
+        go build
         mv easysso_example easysso_example_linux
        
     - name: Upload a Build Artifact
@@ -44,8 +44,7 @@ jobs:
       
     - name: Build win
       run: |
-        go build
-        Rename-Item -Path "./easysso_example.exe" -NewName "easysso_example.exe"
+        go build -o "easysso_example.exe"
 
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v3.1.3
