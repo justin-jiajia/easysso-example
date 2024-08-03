@@ -22,8 +22,7 @@ jobs:
 
     - name: Build linux
       run: |
-        go build
-        mv easysso_example easysso_example_linux
+        go build -o "easysso_example_linux"
        
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v3.1.3
