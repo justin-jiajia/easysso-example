@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"log"
 	"math/rand"
 	"net/http"
@@ -77,7 +78,7 @@ type InfoResponse struct {
 	JoinTime int    `json:"jointime"`
 }
 
-func GetUserInfo(token string) InfoResponse {
+func GetUserInfo(token string) (InfoResponse, error) {
 	url, err := url.JoinPath(config.Config.Server, "/api/oath2/information/")
 	if err != nil {
 		log.Panic(err)
@@ -91,7 +92,7 @@ func GetUserInfo(token string) InfoResponse {
 
 	reqjsoned, err := json.Marshal(req)
 	if err != nil {
-		log.Panic(err)
+		return InfoResponse{}, err
 	}
 
 	resp, err := http.Post(url, "application/json", bytes.NewReader(reqjsoned))
@@ -103,21 +104,18 @@ func GetUserInfo(token string) InfoResponse {
 
 	if resp.StatusCode != 200 {
 		var res ErrorResponse
-		err = json.NewDecoder(resp.Body).Decode(&res)
-		if err != nil {
-			log.Panic(err)
+		if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+			return InfoResponse{}, err
 		}
-		log.Panic(res.Error)
+		return InfoResponse{}, errors.New(res.Error)
 	}
 
 	var res InfoResponse
-	// s, _ := io.ReadAll(resp.Body)
-	// println(string(s))
 	err = json.NewDecoder(resp.Body).Decode(&res)
 	if err != nil {
 		log.Panic(err)
 	}
-	return res
+	return res, nil
 }
 
 const state_rand_char = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"

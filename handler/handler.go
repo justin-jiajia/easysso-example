@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 	"net/url"
 
@@ -21,15 +20,19 @@ type Res struct {
 func IndexHandler(c *gin.Context) {
 	session, err := session.Store.Get(c.Request, "session")
 	if err != nil {
-		log.Println(err)
+		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	token, ok := session.Values["token"].(string)
 	if !ok || token == "" {
 		c.HTML(http.StatusOK, "unloginindex.html", nil)
+		return
 	}
-	res := utils.GetUserInfo(token)
+	res, err := utils.GetUserInfo(token)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/logout")
+	}
 	p, _ := url.JoinPath(config.Config.Server, "/ui/settings.html")
 	r := Res{
 		ID:          res.ID,
@@ -43,13 +46,13 @@ func IndexHandler(c *gin.Context) {
 func LogoutHandler(c *gin.Context) {
 	session, err := session.Store.Get(c.Request, "session")
 	if err != nil {
-		log.Println(err)
+		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 	session.Values["token"] = ""
 	err = session.Save(c.Request, c.Writer)
 	if err != nil {
-		log.Println(err)
+		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 	c.Redirect(http.StatusFound, "/")
@@ -59,7 +62,7 @@ func RedirectHandler(c *gin.Context) {
 	url, state := utils.GetRedirectURL()
 	session, err := session.Store.Get(c.Request, "session")
 	if err != nil {
-		log.Println(err)
+		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 	if session.Values["token"] != "" && session.Values["token"] != nil {
@@ -68,7 +71,7 @@ func RedirectHandler(c *gin.Context) {
 	session.Values["state"] = state
 	err = session.Save(c.Request, c.Writer)
 	if err != nil {
-		log.Println(err)
+		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 	c.Redirect(http.StatusFound, url)
@@ -83,7 +86,7 @@ func CallbackHandler(c *gin.Context) {
 	token := utils.CodeToToken(code)
 	session, err := session.Store.Get(c.Request, "session")
 	if err != nil {
-		log.Println(err)
+		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 	if state != session.Values["state"] {
@@ -92,7 +95,7 @@ func CallbackHandler(c *gin.Context) {
 	session.Values["token"] = token
 	err = session.Save(c.Request, c.Writer)
 	if err != nil {
-		log.Println(err)
+		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 	c.Redirect(http.StatusFound, "/")
